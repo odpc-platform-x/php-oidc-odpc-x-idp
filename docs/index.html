@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>odpc-platform-x/php-oidc-odpc-x-idp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0A1B2E;
+    --surface: #F7F9FC;
+    --card: #FFFFFF;
+    --accent: #0E9F6E;
+    --key: #F5A524;
+    --muted: #5B7089;
+    --border: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #E8EEF5;
+      --surface: #0A1B2E;
+      --card: #12253A;
+      --muted: #93A6BD;
+      --border: color-mix(in srgb, var(--ink) 12%, transparent);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #E8EEF5;
+    --surface: #0A1B2E;
+    --card: #12253A;
+    --muted: #93A6BD;
+    --border: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  :root[data-theme="light"] {
+    --ink: #0A1B2E;
+    --surface: #F7F9FC;
+    --card: #FFFFFF;
+    --muted: #5B7089;
+    --border: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans Thai', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  code, pre, .mono {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  code {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.1em 0.45em;
+    font-size: 0.88em;
+  }
+  pre {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    max-width: 100%;
+  }
+  pre code { background: none; border: none; padding: 0; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  nav.sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.2rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .pkg-head { margin-bottom: 0.4rem; }
+  .pkg-head .name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    word-break: break-word;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .version-chip {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.15rem 0.65rem;
+    color: var(--accent);
+    margin-bottom: 1.4rem;
+  }
+  nav.sidebar ul { list-style: none; padding: 0; margin: 0; flex: 1; }
+  nav.sidebar li { margin-bottom: 0.2rem; }
+  nav.sidebar a {
+    display: block;
+    color: var(--muted);
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.92rem;
+  }
+  nav.sidebar a:hover { background: var(--card); text-decoration: none; }
+  nav.sidebar a.active { color: var(--accent); background: var(--card); font-weight: 600; }
+  .sidebar-logos {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding-top: 1.2rem;
+    margin-top: 1.2rem;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-logos img { height: 48px; width: auto; opacity: 0.85; }
+
+  main { padding: 2.5rem 2.5rem 6rem; min-width: 0; }
+  .content { max-width: 760px; }
+  header.hero { margin-bottom: 2rem; }
+  header.hero h1 { font-size: 1.55rem; margin: 0 0 0.5rem; font-weight: 700; letter-spacing: -0.01em; }
+  header.hero p.tag { color: var(--muted); margin: 0; font-size: 0.98rem; max-width: 60ch; }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.2rem 0; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+    color: var(--muted);
+    background: var(--card);
+    white-space: nowrap;
+  }
+
+  .install-strip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1.4rem 0 2rem;
+  }
+  .install-strip code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85rem;
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .copy-btn {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 0.78rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.7rem;
+    color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { background: var(--surface); }
+
+  .pm-tabs { display: flex; gap: 0.3rem; flex-shrink: 0; }
+  .pm-tab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.22rem 0.6rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .pm-tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.5rem;
+  }
+
+  section { margin-bottom: 3.4rem; scroll-margin-top: 1.5rem; }
+  section h2 {
+    font-size: 1.2rem;
+    padding-bottom: 0.5rem;
+    margin: 0 0 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  section h3 { font-size: 0.98rem; margin: 1.5rem 0 0.6rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.87rem;
+    margin: 0.8rem 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'IBM Plex Mono', monospace; }
+
+  ul.plain { padding-left: 1.3rem; }
+  ul.plain li { margin-bottom: 0.5rem; }
+
+  .step-list { list-style: none; padding: 0; counter-reset: step; }
+  .step-list > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.6rem;
+    margin-bottom: 2rem;
+  }
+  .step-list > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.05rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .callout {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.9rem;
+    margin: 1.2rem 0;
+  }
+
+  .flow-wrap { margin: 1.6rem 0 0.8rem; overflow-x: auto; }
+  .rail {
+    position: relative;
+    min-width: 620px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 2.2rem 0.5rem 0;
+  }
+  .rail::before {
+    content: '';
+    position: absolute;
+    top: calc(2.2rem + 8px);
+    left: 4%;
+    right: 4%;
+    height: 1px;
+    background: var(--border);
+  }
+  .rail-node { position: relative; width: 20%; text-align: center; z-index: 1; }
+  .rail-dot-static {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--muted);
+    margin: 0 auto 0.6rem;
+  }
+  .rail-node[data-stage="idp"] .rail-dot-static,
+  .rail-node[data-stage="callback"] .rail-dot-static,
+  .rail-node[data-stage="session"] .rail-dot-static {
+    border-color: var(--key);
+  }
+  .rail-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+  .rail-label code { font-size: 0.72rem; }
+
+  .rail-traveler {
+    position: absolute;
+    top: calc(2.2rem + 8px - 5px);
+    left: 4%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: travel 6s ease-in-out infinite;
+  }
+  @keyframes travel {
+    0%   { left: 4%;  background: var(--muted); transform: scale(1); }
+    24%  { left: 25%; background: var(--muted); }
+    26%  { left: 25%; background: var(--key); }
+    48%  { left: 50%; background: var(--key); }
+    62%  { left: 75%; background: var(--key); }
+    75%  { left: 96%; background: var(--key); transform: scale(1); }
+    88%  { left: 96%; background: var(--key); transform: scale(1.6); }
+    100% { left: 96%; background: var(--key); transform: scale(1.6); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rail-traveler { animation: none; left: 96%; background: var(--key); transform: scale(1.6); }
+  }
+  .rail-caption { font-size: 0.86rem; color: var(--muted); margin-top: 1rem; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; align-items: center; flex-wrap: wrap; gap: 0.6rem 1.2rem; }
+    nav.sidebar ul { display: flex; flex-wrap: wrap; gap: 0.2rem; flex: unset; }
+    .pkg-head { margin-bottom: 0; }
+    .sidebar-logos { border-top: none; margin-top: 0; padding-top: 0; }
+    main { padding: 1.5rem; }
+  }
+  @media (max-width: 400px) {
+    main { padding: 1rem; }
+    header.hero h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="pkg-head">
+      <span class="name">odpc-platform-x/php-oidc-odpc-x-idp</span>
+      <span class="version-chip">v0.1.0</span>
+    </div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#requirements">Requirements</a></li>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#quickstart">Quickstart</a></li>
+      <li><a href="#routes">Routes</a></li>
+      <li><a href="#discovery">Discovery caching</a></li>
+      <li><a href="#config">Config reference</a></li>
+      <li><a href="#caveats">Caveats</a></li>
+    </ul>
+    <div class="sidebar-logos">
+      <a href="https://idp.odpcx.com"><img src="https://cdn.odpcx.com/public/idp/idp-logo.webp" alt="ODPCX IdP Link"></a>
+      <a href="https://odpc10.ddc.moph.go.th"><img src="https://cdn.odpcx.com/public/idp/odpcx-logo.webp" alt="ODPC-X Platform"></a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="content">
+      <header class="hero">
+        <h1>odpc-platform-x/php-oidc-odpc-x-idp</h1>
+        <p class="tag">Reusable Laravel OIDC (authorization-code + PKCE) package against the ODPCX IdP Link, on top of Laravel's own session guard.</p>
+        <div class="badges" style="display:flex; gap:1rem; flex-wrap:wrap; margin:1.2rem 0;">
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--muted);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 10 L10 2 L18 10 L10 18 Z"/>
+            </svg>
+            Laravel 11 / 12
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--muted);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 4h14v12H3z M6 6.5h1.5v6.5H6z M9 8h1.5v5H9z M12.5 5.5h1.5v8h-1.5z"/>
+            </svg>
+            PHP 8.2+
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--muted);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 2L15 5v10l-5 3-5-3V5l5-3M10 2v6m0 0l4 2.5M10 8l-4 2.5M10 14l4-2.5M10 14l-4-2.5"/>
+            </svg>
+            firebase/php-jwt
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--muted);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" rx="2"/>
+              <circle cx="5" cy="5" r="1.5" fill="currentColor"/>
+              <circle cx="10" cy="5" r="1.5" fill="currentColor"/>
+              <circle cx="15" cy="5" r="1.5" fill="currentColor"/>
+              <line x1="2" y1="8" x2="18" y2="8" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            OpenID Connect
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--muted);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 4h14v12H3z M5 6h3v8H5z M10 5h3v9h-3z M15 7h2v7h-2z M4 17h12"/>
+            </svg>
+            Pest
+          </div>
+        </div>
+      </header>
+
+      <div class="install-strip" id="install-strip"
+        data-composer="composer require odpc-platform-x/php-oidc-odpc-x-idp"
+        data-composerjson='"repositories": [{"type": "vcs", "url": "git@github.com:odpc-platform-x/php-oidc-odpc-x-idp.git"}]'>
+        <div class="pm-tabs" id="pm-tabs">
+          <button class="pm-tab active" data-pm="composer" type="button">composer</button>
+          <button class="pm-tab" data-pm="composerjson" type="button">composer.json</button>
+        </div>
+        <code id="install-cmd">composer require odpc-platform-x/php-oidc-odpc-x-idp</code>
+        <button class="copy-btn" id="copy-btn" type="button">Copy</button>
+      </div>
+
+      <section id="overview">
+        <p class="eyebrow">Overview</p>
+        <h2>Overview</h2>
+        <p>
+          แพ็กเกจนี้ทำหน้าที่เป็น <strong>auth module</strong> สำเร็จรูปสำหรับแอป Laravel ที่ต้องล็อกอินผ่าน
+          ODPCX IdP Link ด้วย OAuth2 authorization-code flow (PKCE) แล้วใช้ session guard ของ Laravel เองแทนการ
+          hand-roll JWT cookie — session cookie, guard, และ <code>auth</code> middleware มาฟรีจาก Laravel อยู่แล้ว
+          ตัวแพ็กเกจเป็น <em>generic core</em> เท่านั้น — ไม่มี role, ไม่มี Eloquent model, ไม่มี JIT-provisioning
+          logic ผูกมาด้วย — ฝั่ง host แอปต้อง implement <code>AuthUserService</code> หนึ่งอินเทอร์เฟซเพื่อเชื่อมกับ
+          user store ของตัวเอง
+        </p>
+
+        <div class="flow-wrap">
+          <div class="rail">
+            <div class="rail-traveler" aria-hidden="true"></div>
+            <div class="rail-node" data-stage="browser">
+              <div class="rail-dot-static"></div>
+              <div class="rail-label">Browser</div>
+            </div>
+            <div class="rail-node" data-stage="login">
+              <div class="rail-dot-static"></div>
+              <div class="rail-label"><code>/auth/login</code></div>
+            </div>
+            <div class="rail-node" data-stage="idp">
+              <div class="rail-dot-static"></div>
+              <div class="rail-label">ODPCX IdP Link</div>
+            </div>
+            <div class="rail-node" data-stage="callback">
+              <div class="rail-dot-static"></div>
+              <div class="rail-label"><code>/auth/callback</code></div>
+            </div>
+            <div class="rail-node" data-stage="session">
+              <div class="rail-dot-static"></div>
+              <div class="rail-label">Laravel session</div>
+            </div>
+          </div>
+        </div>
+        <p class="rail-caption">ผู้ใช้ล็อกอินผ่าน ODPCX IdP Link แล้วได้รับ token กลับมาเป็น Laravel session ผ่าน <code>Auth::guard()->login()</code></p>
+
+        <p class="callout">
+          หลังจากนั้น ทุก request ที่ต้อง auth จะอาศัย Laravel session cookie ตามปกติ —
+          <code>auth</code> middleware ตรวจสอบ session แล้ว <code>GET /auth/me</code> คืน <code>Auth::user()</code>
+          เป็น JSON
+        </p>
+      </section>
+
+      <section id="requirements">
+        <p class="eyebrow">Setup</p>
+        <h2>Requirements</h2>
+        <ul class="plain">
+          <li><strong>PHP >= 8.2</strong></li>
+          <li><strong>Laravel 11 or 12</strong> — uses <code>illuminate/support</code>, <code>illuminate/http</code>, <code>illuminate/auth</code>, <code>illuminate/routing</code></li>
+          <li><strong><code>firebase/php-jwt</code> ^6.10</strong> — installed automatically; used for RS256 id_token verification against the IdP's JWKS</li>
+          <li><strong>Session middleware</strong> — this package's routes run behind Laravel's <code>web</code> middleware group by default, which already includes session + CSRF handling</li>
+        </ul>
+      </section>
+
+      <section id="installation">
+        <p class="eyebrow">Setup</p>
+        <h2>Installation</h2>
+        <p>แพ็กเกจนี้ไม่ได้ตีพิมพ์บน Packagist — ติดตั้งผ่าน VCS repository</p>
+        <h3>composer.json</h3>
+        <pre><code>{
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:odpc-platform-x/php-oidc-odpc-x-idp.git"
+    }
+  ]
+}</code></pre>
+        <h3>Install</h3>
+        <pre><code>composer config repositories.odpcx-idp vcs git@github.com:odpc-platform-x/php-oidc-odpc-x-idp.git
+composer require odpc-platform-x/php-oidc-odpc-x-idp</code></pre>
+        <p style="font-size:0.85rem; color:var(--muted);">Laravel package auto-discovery registers <code>OdpcxAuthServiceProvider</code> automatically — no manual provider registration needed.</p>
+      </section>
+
+      <section id="quickstart">
+        <p class="eyebrow">Get running</p>
+        <h2>Quickstart</h2>
+        <ol class="step-list">
+          <li>
+            <h3 style="margin-top:0">Implement <code>AuthUserService</code></h3>
+            <p>นี่คือจุดเดียวที่ host แอปต้อง implement เอง — JIT-provisioning, Eloquent upsert, role logic ทั้งหมดไปอยู่ที่นี่</p>
+            <pre><code>use Illuminate\Contracts\Auth\Authenticatable;
+use OdpcPlatformX\PhpOidcOdpcXIdp\Contracts\AuthUserService;
+
+class MyAuthUserService implements AuthUserService
+{
+    public function onLogin(array $claims): Authenticatable
+    {
+        // your own Eloquent upsert / JIT role provisioning / season logic goes here
+        return User::updateOrCreate(
+            ['idp_sub' => $claims['sub']],
+            ['email' => $claims['email'], 'name' => $claims['name']],
+        );
+    }
+}</code></pre>
+          </li>
+          <li>
+            <h3 style="margin-top:0">Bind it in your <code>AppServiceProvider</code></h3>
+            <pre><code>use OdpcPlatformX\PhpOidcOdpcXIdp\Contracts\AuthUserService;
+
+public function register(): void
+{
+    $this->app->bind(AuthUserService::class, MyAuthUserService::class);
+}</code></pre>
+          </li>
+          <li>
+            <h3 style="margin-top:0">Set env vars</h3>
+            <pre><code># Official ODPCX IdP Link (frontend: https://idp.odpcx.com)
+ODPCX_OIDC_ISSUER=https://api.idp.odpcx.com
+ODPCX_OIDC_CLIENT_ID=...
+ODPCX_OIDC_CLIENT_SECRET=...
+ODPCX_OIDC_REDIRECT_URI=https://your-app.example.com/auth/callback
+ODPCX_OIDC_POST_LOGOUT_REDIRECT_URI=https://your-app.example.com</code></pre>
+            <p>
+              Discovery document:
+              <code>https://api.idp.odpcx.com/.well-known/openid-configuration</code>
+            </p>
+            <p>
+              This wires up <code>GET /auth/login</code>, <code>GET /auth/callback</code>,
+              <code>POST /auth/logout</code>, <code>GET /auth/me</code> behind the <code>web</code>
+              middleware group. Layer your own authorization (roles, policies) on top of the
+              <code>auth</code> middleware — that's intentionally not part of this package.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="routes">
+        <p class="eyebrow">Reference</p>
+        <h2>Routes</h2>
+        <table>
+          <thead><tr><th>Endpoint</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td><code>GET {prefix}/login</code></td><td>Stores PKCE state/nonce/verifier in the session, redirects (302) to the IdP. 503 if discovery is unavailable.</td></tr>
+            <tr><td><code>GET {prefix}/callback</code></td><td>Verifies state, exchanges code, verifies id_token, calls <code>onLogin()</code>, logs in via the guard, redirects to <code>intended()</code>. 401 on state/nonce mismatch, 500 if <code>onLogin()</code> throws.</td></tr>
+            <tr><td><code>POST {prefix}/logout</code> (auth)</td><td>Logs out, invalidates session, returns <code>{ "logoutUrl": "..." }</code> for the client to navigate to.</td></tr>
+            <tr><td><code>GET {prefix}/me</code> (auth)</td><td>Returns <code>Auth::user()</code> as JSON. 401 if unauthenticated.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="discovery">
+        <p class="eyebrow">Resilience</p>
+        <h2>Discovery caching — no restart needed on IdP recovery</h2>
+        <p>
+          Discovery and JWKS documents are cached for <code>discovery_ttl</code> seconds, but only on
+          <strong>success</strong>. A failed fetch aborts with <code>503</code>
+          (<code>"OIDC provider is not configured or discovery is unavailable"</code>) and is never cached —
+          the very next request retries from scratch. If the IdP is temporarily down, the app recovers
+          automatically once it's back, no restart required.
+        </p>
+      </section>
+
+      <section id="config">
+        <p class="eyebrow">Reference</p>
+        <h2>Config reference (<code>config/odpcx-auth.php</code>)</h2>
+        <table>
+          <thead><tr><th>Key</th><th>Default</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>issuer</code></td><td><code>https://api.idp.odpcx.com</code></td><td>ODPCX IdP Link discovery issuer</td></tr>
+            <tr><td><code>client_id</code> / <code>client_secret</code></td><td>—</td><td>from the IdP</td></tr>
+            <tr><td><code>redirect_uri</code></td><td>—</td><td>must match the IdP client's registered redirect</td></tr>
+            <tr><td><code>guard</code></td><td><code>web</code></td><td>Laravel auth guard used for <code>Auth::guard($guard)</code></td></tr>
+            <tr><td><code>discovery_ttl</code></td><td><code>3600</code></td><td>seconds; failed fetches are never cached</td></tr>
+            <tr><td><code>routes.enabled</code></td><td><code>true</code></td><td>set <code>false</code> to omit the built-in routes</td></tr>
+            <tr><td><code>routes.prefix</code></td><td><code>auth</code></td><td>e.g. <code>oidc</code> mounts at <code>/oidc/*</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="caveats">
+        <p class="eyebrow">Read before you rely on this</p>
+        <h2>Caveats</h2>
+        <ul class="plain">
+          <li><strong>No refresh-token flow.</strong> Once the Laravel session expires, the user must log in again via <code>GET {prefix}/login</code>.</li>
+          <li><strong>No role/permission guards included.</strong> Any authorization beyond "is this a valid session" is a host concern — layer your own on top of the <code>auth</code> middleware.</li>
+          <li><strong>No IdP call at boot.</strong> Discovery only ever happens lazily on the first request that needs it (login/callback), so the app still boots even if the IdP is unreachable.</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#sidebar a[href^="#"]'));
+    var sections = links.map(function (a) {
+      var href = a.getAttribute('href');
+      if (href && href !== '#') {
+        try {
+          return document.querySelector(href);
+        } catch (e) {}
+      }
+      return null;
+    });
+
+    function onScroll() {
+      var pos = window.scrollY + 100;
+      var activeIndex = 0;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i] && sections[i].offsetTop <= pos) activeIndex = i;
+      }
+      links.forEach(function (a, i) {
+        a.classList.toggle('active', i === activeIndex);
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+
+  (function () {
+    var strip = document.getElementById('install-strip');
+    var btn = document.getElementById('copy-btn');
+    var cmd = document.getElementById('install-cmd');
+    var tabs = document.getElementById('pm-tabs');
+    if (!strip || !btn || !cmd || !tabs) return;
+
+    tabs.addEventListener('click', function (e) {
+      var tab = e.target.closest('.pm-tab');
+      if (!tab) return;
+      Array.prototype.forEach.call(tabs.querySelectorAll('.pm-tab'), function (t) {
+        t.classList.toggle('active', t === tab);
+      });
+      cmd.textContent = strip.getAttribute('data-' + tab.dataset.pm);
+    });
+
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(cmd.textContent).then(function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      });
+    });
+  })();
+</script>
+
+<footer style="text-align: center; padding: 3rem 2rem 1rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 3rem;">
+  <p style="margin: 0;">ODPC-X-Platform : สำนักงานป้องกันควบคุมโรคที่ 10 จังหวัดอุบลราชธานี</p>
+</footer>
+</body>
+</html>
