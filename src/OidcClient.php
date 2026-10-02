@@ -11,6 +11,11 @@ use RuntimeException;
 
 class OidcClient
 {
+    private const CLAIM_KEYS = [
+        'email', 'email_verified', 'name', 'given_name', 'family_name', 'picture',
+        'phone_number', 'birthdate', 'address', 'mfa_enabled', 'citizen_id',
+    ];
+
     public function __construct(private readonly array $config)
     {
     }
@@ -100,7 +105,7 @@ class OidcClient
      * Exchanges the authorization code for tokens, verifies the id_token
      * (RS256 against JWKS, iss/aud/nonce), and returns normalized claims.
      *
-     * @return array{sub: string, email: ?string, name: ?string, picture: ?string, id_token: string}
+     * @return array<string, mixed> sub, id_token and every key in CLAIM_KEYS
      */
     public function exchangeCode(string $code, array $tx): array
     {
@@ -136,13 +141,15 @@ class OidcClient
             }
         }
 
-        return [
-            'sub' => $claims['sub'],
-            'email' => $userinfo['email'] ?? $claims['email'] ?? null,
-            'name' => $userinfo['name'] ?? $claims['name'] ?? null,
-            'picture' => $userinfo['picture'] ?? $claims['picture'] ?? null,
-            'id_token' => $idToken,
-        ];
+        // Fixed key set (null when the IdP did not release it) so host apps never guess.
+        // Optional claims depend on the scopes requested — see README.
+        $normalized = ['sub' => $claims['sub']];
+        foreach (self::CLAIM_KEYS as $key) {
+            $normalized[$key] = $userinfo[$key] ?? $claims[$key] ?? null;
+        }
+        $normalized['id_token'] = $idToken;
+
+        return $normalized;
     }
 
     private function verifyIdToken(string $idToken, string $expectedNonce): array

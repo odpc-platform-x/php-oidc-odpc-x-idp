@@ -15,7 +15,7 @@ class TestCase extends Orchestra
     // ponytail: single fixed in-memory user, no DB — enough to exercise the guard's
     // login/retrieveById round-trip without pulling in migrations.
     public static array $users = [
-        1 => ['id' => 1, 'name' => 'Test User', 'email' => 'test@example.com', 'remember_token' => null],
+        1 => ['id' => 1, 'name' => 'Test User', 'email' => 'test@example.com', 'password' => '', 'remember_token' => null],
     ];
 
     protected function getPackageProviders($app): array

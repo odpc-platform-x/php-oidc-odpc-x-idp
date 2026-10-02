@@ -1,7 +1,10 @@
 <?php
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use OdpcPlatformX\PhpOidcOdpcXIdp\Contracts\AuthUserService;
+use OdpcPlatformX\PhpOidcOdpcXIdp\Tests\Support\JsonableGenericUser;
 use OdpcPlatformX\PhpOidcOdpcXIdp\Tests\TestCase;
 use OdpcPlatformX\PhpOidcOdpcXIdp\Tests\Support\IdTokenFactory;
 
@@ -121,5 +124,59 @@ it('logs the user out and returns a logoutUrl, clearing auth', function () {
 
     expect($response->status())->toBe(200)
         ->and($response->json('logoutUrl'))->toStartWith('https://idp.test/oauth/logout?')
+        ->and(Auth::guard('web')->check())->toBeFalse();
+});
+
+it('passes the full IdP claim set to onLogin, userinfo winning and absent claims as null', function () {
+    $factory = new IdTokenFactory();
+    $factory->fakeDiscoveryOnly();
+
+    $tx = performLoginAndGetTx();
+
+    $store = new ArrayObject();
+    $this->app->bind(AuthUserService::class, fn () => new class($store) implements AuthUserService {
+        public function __construct(private ArrayObject $store)
+        {
+        }
+
+        public function onLogin(array $claims): Authenticatable
+        {
+            $this->store->exchangeArray($claims);
+
+            return new JsonableGenericUser(TestCase::$users[1]);
+        }
+    });
+
+    $idToken = $factory->issueToken([
+        'iss' => 'https://idp.test', 'aud' => 'test-client', 'sub' => 'user-123',
+        'nonce' => $tx['nonce'], 'email' => 'old@example.com', 'iat' => time(), 'exp' => time() + 300,
+    ]);
+    Http::fake([
+        'https://idp.test/.well-known/openid-configuration' => Http::response($factory->discoveryDocument()),
+        'https://idp.test/.well-known/jwks.json' => Http::response($factory->jwks()),
+        'https://idp.test/oauth/token' => Http::response(['id_token' => $idToken, 'access_token' => 't']),
+        'https://idp.test/oauth/userinfo' => Http::response([
+            'email' => 'new@example.com', 'email_verified' => true, 'given_name' => 'Ex', 'mfa_enabled' => false,
+        ]),
+    ]);
+
+    $this->get('/auth/callback?code=test-code&state=' . $tx['state']);
+
+    $captured = $store->getArrayCopy();
+
+    expect($captured['email'])->toBe('new@example.com')
+        ->and($captured['email_verified'])->toBeTrue()
+        ->and($captured['given_name'])->toBe('Ex')
+        ->and($captured['mfa_enabled'])->toBeFalse()
+        ->and($captured)->toHaveKeys(['family_name', 'phone_number', 'birthdate', 'address', 'citizen_id', 'id_token'])
+        ->and($captured['citizen_id'])->toBeNull();
+});
+
+it('redirects to / and flashes the IdP error on ?error instead of looping back to the callback', function () {
+    $response = $this->get('/auth/callback?error=access_denied&error_description=User+denied');
+
+    expect($response->status())->toBe(302)
+        ->and(parse_url($response->headers->get('Location'), PHP_URL_PATH) ?: '/')->toBe('/')
+        ->and(session('odpcx_error'))->toBe(['error' => 'access_denied', 'error_description' => 'User denied'])
         ->and(Auth::guard('web')->check())->toBeFalse();
 });

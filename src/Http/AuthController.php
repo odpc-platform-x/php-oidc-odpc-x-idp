@@ -25,7 +25,11 @@ class AuthController extends Controller
     public function callback(Request $request)
     {
         if ($request->query('error')) {
-            return redirect(config('odpcx-auth.redirect_uri'));
+            // Redirecting to redirect_uri would loop back here and 401; flash the error for the host app instead.
+            return redirect('/')->with('odpcx_error', [
+                'error' => $request->query('error'),
+                'error_description' => $request->query('error_description'),
+            ]);
         }
 
         $tx = $request->session()->pull('odpcx_oauth_tx');
