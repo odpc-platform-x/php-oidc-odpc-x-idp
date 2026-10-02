@@ -11,10 +11,12 @@ jobs:
     strategy:
       matrix:
         php: ["8.2", "8.3", "8.4"]
-        laravel: ["11.*", "12.*"]
+        laravel: ["11.*", "12.*", "13.*"]
         exclude:
           - php: "8.2"
             laravel: "12.*"
+          - php: "8.2"
+            laravel: "13.*"
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +29,10 @@ jobs:
       - name: Require Laravel version
         run: composer require "illuminate/contracts=${{ matrix.laravel }}" --no-update
 
+      # Laravel 11 is EOL: every 11.x release carries an advisory, which makes Composer refuse
+      # to resolve it. CI-only override so the 11.* constraint stays tested.
       - name: Install dependencies
-        run: composer update --prefer-dist --no-interaction --no-progress
+        run: composer update --prefer-dist --no-interaction --no-progress --no-security-blocking
 
       - name: Run tests
         run: vendor/bin/pest
