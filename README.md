@@ -25,8 +25,8 @@ just one config file, one interface, one OIDC client, and one controller.
 ## Requirements
 
 - **PHP >= 8.2**
-- **Laravel 11 or 12** (`illuminate/support`, `illuminate/http`, `illuminate/auth`, `illuminate/routing`)
-- `firebase/php-jwt` `^6.10` (installed automatically as a dependency)
+- **Laravel 11, 12 or 13** (`illuminate/support`, `illuminate/http`, `illuminate/auth`, `illuminate/routing`)
+- `firebase/php-jwt` `^7.0` (installed automatically as a dependency)
 
 ## Install
 
@@ -69,6 +69,19 @@ class MyAuthUserService implements AuthUserService
 }
 ```
 
+### `$claims` keys
+
+Always present; `null` when the IdP did not release the claim (it depends on
+the scopes you request). `/userinfo` wins over the id_token when both carry a key.
+
+| Key | Scope needed |
+|-----|--------------|
+| `sub`, `id_token` | `openid` |
+| `name`, `given_name`, `family_name`, `picture`, `phone_number`, `birthdate`, `address` | `profile` |
+| `email`, `email_verified` | `email` |
+| `mfa_enabled` | `mfa` |
+| `citizen_id` | `cid` |
+
 Bind it in your `AppServiceProvider`:
 
 ```php
@@ -94,7 +107,7 @@ ODPCX_OIDC_ISSUER=https://api.idp.odpcx.com
 ODPCX_OIDC_CLIENT_ID=...
 ODPCX_OIDC_CLIENT_SECRET=...
 ODPCX_OIDC_REDIRECT_URI=https://your-app.example.com/auth/callback
-ODPCX_OIDC_SCOPES="openid profile email"
+ODPCX_OIDC_SCOPES="openid profile email"   # opt-in extras: mfa, cid (see Scopes below)
 ODPCX_OIDC_POST_LOGOUT_REDIRECT_URI=https://your-app.example.com
 
 ODPCX_OIDC_GUARD=web
@@ -110,9 +123,28 @@ Discovery document: `https://api.idp.odpcx.com/.well-known/openid-configuration`
 | Endpoint | Behavior |
 |----------|----------|
 | `GET {prefix}/login` | Stores PKCE state/nonce/verifier in the Laravel session, redirects (302) to the IdP authorization endpoint. Aborts 503 if discovery is unavailable. |
-| `GET {prefix}/callback?code&state&error` | **Success**: verifies state against the session tx, exchanges the code for tokens, verifies the id_token (RS256 vs JWKS + iss/aud/nonce), calls your `AuthUserService::onLogin()`, logs the user in via `Auth::guard()->login()`, regenerates the session, redirects to `intended()`. **`?error`**: redirects away without logging in. **State mismatch / missing tx**: aborts 401. **`onLogin()` throws**: bubbles as a 500. |
+| `GET {prefix}/callback?code&state&error` | **Success**: verifies state against the session tx, exchanges the code for tokens, verifies the id_token (RS256 vs JWKS + iss/aud/nonce), calls your `AuthUserService::onLogin()`, logs the user in via `Auth::guard()->login()`, regenerates the session, redirects to `intended()`. **`?error`**: redirects to `/` without logging in and flashes `odpcx_error` (see Login errors). **State mismatch / missing tx**: aborts 401. **`onLogin()` throws**: bubbles as a 500. |
 | `POST {prefix}/logout` (auth) | Logs out, invalidates the session, regenerates the CSRF token, returns JSON `{ "logoutUrl": "..." }`. The client must navigate to `logoutUrl` itself. |
 | `GET {prefix}/me` (auth) | Returns the authenticated user as JSON. Unauthenticated: 401. |
+
+## Scopes
+
+Default is `openid profile email`. Opt in through `ODPCX_OIDC_SCOPES`:
+
+- `mfa` — adds `mfa_enabled`.
+- `cid` — adds `citizen_id` (Thai citizen ID). Highest-sensitivity PII: the IdP
+  audits every release and the client must be allowed to request it. Only ask
+  for it if you need it, and never log or expose it.
+- `offline_access` — the IdP supports it, but this package has no refresh flow, so it has no effect here.
+
+## Login errors
+
+If the IdP redirects back with `?error` (e.g. `access_denied`), the package
+redirects to `/` and flashes `odpcx_error` to the session:
+
+```php
+session('odpcx_error'); // ['error' => 'access_denied', 'error_description' => '...']
+```
 
 ## Discovery caching — no restart needed on IdP recovery
 
@@ -130,7 +162,7 @@ no restart required.
 | `issuer` | `https://api.idp.odpcx.com` | ODPCX IdP Link discovery issuer |
 | `client_id` / `client_secret` | — | from the IdP |
 | `redirect_uri` | — | must match the IdP client's registered redirect |
-| `scopes` | `openid profile email` | |
+| `scopes` | `openid profile email` | see Scopes — `mfa`, `cid` are opt-in |
 | `post_logout_redirect_uri` | — | where the IdP sends the browser after logout |
 | `guard` | `web` | the Laravel auth guard used for `Auth::guard($guard)` |
 | `discovery_ttl` | `3600` | seconds; failed fetches are never cached (see above) |
